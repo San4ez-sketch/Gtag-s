@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Gtags v0.1</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .card { background: #1e1e1e; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; box-sizing: border-box; font-size: 15px; }
+        input:focus, textarea:focus { outline: none; border-color: #3b82f6; }
+        button { padding: 10px 15px; border-radius: 8px; border: none; background: #3b82f6; color: #fff; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; }
+        button:hover { background: #2563eb; }
+        .btn-full { width: 100%; margin-top: 10px; font-size: 16px; padding: 12px; }
+        .hidden { display: none !important; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .post { background: #1e1e1e; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #333; }
+        .post-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .user-info-wrapper { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: #fff; flex-shrink: 0; }
+        .user-info { display: flex; flex-direction: column; }
+        .nickname { font-weight: bold; font-size: 16px; }
+        .tag { color: #888; font-size: 14px; }
+        .post-body { margin: 10px 0; font-size: 15px; line-height: 1.5; white-space: pre-wrap; }
+        .visual { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; border: 1px solid #333; }
+        .visual.sticker { width: 120px; height: 120px; object-fit: contain; background: #2a2a2a; padding: 10px; }
+        .picker { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; min-height: 70px; align-items: center; }
+        .picker img { width: 60px; height: 60px; object-fit: contain; border-radius: 8px; cursor: pointer; border: 2px solid transparent; background: #2a2a2a; padding: 5px; transition: border-color 0.2s; }
+        .picker img:hover { border-color: #555; }
+        .picker img.selected { border-color: #3b82f6; }
+        #auth-error { color: #ef4444; font-size: 14px; margin-top: 10px; text-align: center; min-height: 20px; }
+        hr { border: 0; border-top: 1px solid #333; margin: 20px 0; }
+        
+        .post-actions { display: flex; gap: 15px; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px; }
+        .action-btn { background: transparent; color: #aaa; padding: 5px 10px; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+        .action-btn:hover { background: #2a2a2a; color: #fff; }
+        .action-btn.liked { color: #ef4444; }
+        .action-btn.delete { color: #ef4444; }
+        .action-btn.delete:hover { background: #ef4444; color: #fff; }
+
+        .comments-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #444; background: #181818; padding: 15px; border-radius: 8px; }
+        .comment { display: flex; gap: 10px; margin-bottom: 10px; font-size: 14px; }
+        .comment-author { font-weight: bold; color: #3b82f6; cursor: pointer; }
+        .comment-body { color: #ddd; }
+        .comment-form { display: flex; gap: 10px; margin-top: 10px; }
+        .comment-form input { margin: 0; flex-grow: 1; padding: 8px; font-size: 13px; }
+        .comment-form button { padding: 8px 15px; margin: 0; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div id="auth-screen" class="card">
+            <h2 style="margin-top:0; text-align:center;">Вход в Gtags</h2>
+            <input type="text" id="login-nick" placeholder="Ник">
+            <input type="password" id="login-pass" placeholder="Пароль">
+            <button class="btn-full" onclick="login()">Войти</button>
+            
+            <hr>
+            
+            <h3 style="text-align:center;">Или зарегистрироваться</h3>
+            <input type="text" id="reg-nick" placeholder="Ник">
+            <input type="password" id="reg-pass" placeholder="Пароль">
+            <input type="text" id="reg-tag" placeholder="Тэг (без пробелов)">
+            
+            <p style="margin-bottom: 5px; color:#aaa;">Выбери стикер-аватарку:</p>
+            <div class="picker" id="avatar-picker">
+                <span style="color:#666; font-size:14px;">Загрузка стикеров...</span>
+            </div>
+            
+            <button class="btn-full" onclick="register()">Создать аккаунт</button>
+            <div id="auth-error"></div>
+        </div>
+
+        <div id="main-screen" class="hidden">
+            <div class="header">
+                <h1>Gtags <span style="font-size:14px; color:#666;">v0.1</span></h1>
+                <button style="padding: 8px 16px;" onclick="logout()">Выйти</button>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-top:0;">Новый пост</h3>
+                <textarea id="post-body" rows="3" placeholder="Что у тебя нового?"></textarea>
+                
+                <p style="margin-bottom: 5px; color:#aaa;">Прикрепить гифку:</p>
+                <div class="picker" id="gif-picker"></div>
+                
+                <p style="margin-bottom: 5px; color:#aaa;">Прикрепить стикер:</p>
+                <div class="picker" id="sticker-picker"></div>
+
+                <button class="btn-full" onclick="createPost()">Опубликовать</button>
+            </div>
+
+            <div id="feed">
+                <p style="text-align:center; color:#666;">Загрузка ленты...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://yxygkprcowujvxoliixn.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_PwjOKgKzLCOeqxdSP4lLXw_CAdC9Gzh';
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let selectedAvatarId = null;
+        let selectedGifId = null;
+        let selectedStickerId = null;
+        let catalogStickers = [];
+        let catalogGifs = [];
+
+        async function init() {
+            await loadCatalogs();
+            renderPickers();
+            const savedUser = localStorage.getItem('gtags_user');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    showMainScreen();
+                } catch(e) { localStorage.removeItem('gtags_user'); }
+            }
+        }
+
+        async function loadCatalogs() {
+            try {
+                const { data: st } = await supabaseClient.from('sticker_catalog').select('*');
+                const { data: gf } = await supabaseClient.from('gif_catalog').select('*');
+                catalogStickers = st || [];
+                catalogGifs = gf || [];
+            } catch (err) { console.error(err); }
+        }
+
+        function renderPickers() {
+            const avPicker = document.getElementById('avatar-picker');
+            const stPicker = document.getElementById('sticker-picker');
+            const gfPicker = document.getElementById('gif-picker');
+            avPicker.innerHTML = ''; stPicker.innerHTML = ''; gfPicker.innerHTML = '';
+
+            if (catalogStickers.length === 0) {
+                avPicker.innerHTML = '<span style="color:#666;">Нет стикеров.</span>';
+                stPicker.innerHTML = '<span style="color:#666;">Нет стикеров.</span>';
+            } else {
+                catalogStickers.forEach(s => {
+                    const imgAv = document.createElement('img'); imgAv.src = s.url;
+                    imgAv.onclick = () => selectVisual('avatar', s.id, imgAv); avPicker.appendChild(imgAv);
+                    const imgSt = document.createElement('img'); imgSt.src = s.url;
+                    imgSt.onclick = () => selectVisual('sticker', s.id, imgSt); stPicker.appendChild(imgSt);
+                });
+            }
+
+            if (catalogGifs.length === 0) {
+                gfPicker.innerHTML = '<span style="color:#666;">Нет гифок.</span>';
+            } else {
+                catalogGifs.forEach(g => {
+                    const imgGf = document.createElement('img'); imgGf.src = g.url;
+                    imgGf.onclick = () => selectVisual('gif', g.id, imgGf); gfPicker.appendChild(imgGf);
+                });
+            }
+        }
+
+        function selectVisual(type, id, element) {
+            const parent = element.parentElement;
+            Array.from(parent.children).forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+            if (type === 'avatar') selectedAvatarId = id;
+            if (type === 'gif') { selectedGifId = id; selectedStickerId = null; }
+            if (type === 'sticker') { selectedStickerId = id; selectedGifId = null; }
+        }
+
+        async function register() {
+            const nick = document.getElementById('reg-nick').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            const tag = document.getElementById('reg-tag').value.trim();
+            const err = document.getElementById('auth-error');
+            if (!nick || !pass || !tag) return err.innerText = 'Заполни все поля!';
+            err.innerText = 'Загрузка...';
+            const { data, error } = await supabaseClient.from('users').insert([{
+                nickname: nick, password_hash: btoa(pass), tag: tag, avatar_sticker_id: selectedAvatarId || null
+            }]).select();
+            if (error) err.innerText = error.message.includes('unique') ? 'Ник или тэг заняты!' : error.message;
+            else if (data && data.length > 0) loginSuccess(data[0]);
+        }
+
+        async function login() {
+            const nick = document.getElementById('login-nick').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            const err = document.getElementById('auth-error');
+            err.innerText = 'Вход...';
+            const { data, error } = await supabaseClient.from('users').select('*').eq('nickname', nick).single();
+            if (error || !data) return err.innerText = 'Пользователь не найден';
+            if (data.password_hash !== btoa(pass)) return err.innerText = 'Неверный пароль';
+            loginSuccess(data);
+        }
+
+        function loginSuccess(user) {
+            currentUser = user;
+            localStorage.setItem('gtags_user', JSON.stringify(user));
+            document.getElementById('auth-error').innerText = '';
+            showMainScreen();
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('gtags_user');
+            document.getElementById('main-screen').classList.add('hidden');
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('login-nick').value = '';
+            document.getElementById('login-pass').value = '';
+        }
+
+        function showMainScreen() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('main-screen').classList.remove('hidden');
+            loadFeed();
+        }
+
+        async function createPost() {
+            const body = document.getElementById('post-body').value.trim();
+            if (!body) return alert('Напиши текст!');
+            const { error } = await supabaseClient.from('posts').insert([{
+                author_id: currentUser.id, body: body, gif_id: selectedGifId, sticker_id: selectedStickerId
+            }]);
+            if (error) alert('Ошибка: ' + error.message);
+            else {
+                document.getElementById('post-body').value = '';
+                selectedGifId = null; selectedStickerId = null;
+                document.querySelectorAll('.picker img').forEach(img => img.classList.remove('selected'));
+                loadFeed();
+            }
+        }
+
+        // УДАЛЕНИЕ ПОСТА (Теперь работает, т.к. мы добавили правило в базу)
+        async function deletePost(postId) {
+            if (!confirm('Ты уверен, что хочешь удалить этот пост?')) return;
+            
+            // База данных сама проверит, что currentUser.id совпадает с автором
+            const { error } = await supabaseClient.from('posts').delete().eq('id', postId);
+            
+            if (error) {
+                alert('Не удалось удалить: ' + error.message);
+            } else {
+                loadFeed(); // Обновляем ленту
+            }
+        }
+
+        async function toggleLike(postId, currentlyLiked) {
+            if (currentlyLiked) {
+                await supabaseClient.from('likes').delete().eq('post_id', postId).eq('user_id', currentUser.id);
+            } else {
+                await supabaseClient.from('likes').insert([{ post_id: postId, user_id: currentUser.id }]);
+            }
+            loadFeed();
+        }
+
+        async function submitComment(postId) {
+            const input = document.getElementById(`comment-input-${postId}`);
+            const body = input.value.trim();
+            if (!body) return;
+            const { error } = await supabaseClient.from('comments').insert([{
+                post_id: postId, author_id: currentUser.id, body: body
+            }]);
+            if (error) alert('Ошибка: ' + error.message);
+            else { input.value = ''; loadFeed(); }
+        }
+
+        async function loadFeed() {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = '<p style="text-align:center; color:#666;">Загрузка...</p>';
+
+            const { data, error } = await supabaseClient.from('posts')
+                .select(`
+                    *,
+                    users!posts_author_id_fkey ( nickname, tag, avatar_sticker_id ),
+                    gif_catalog ( url ),
+                    sticker_catalog ( url ),
+                    likes ( user_id ),
+                    comments ( id, body, users ( nickname ) )
+                `)
+                .order('created_at', { ascending: false });
+
+            feed.innerHTML = '';
+            if (error) return feed.innerHTML = '<p style="color:#ef4444;">Ошибка: ' + error.message + '</p>';
+            if (!data || data.length === 0) return feed.innerHTML = '<p style="text-align:center; color:#666;">Пока нет постов.</p>';
+
+            data.forEach(post => {
+                const author = post.users || { nickname: 'Unknown', tag: 'unknown' };
+                const avSticker = catalogStickers.find(s => s.id === author.avatar_sticker_id);
+                const avatarHtml = avSticker ? `<img src="${avSticker.url}" class="avatar">` : `<div class="avatar">${author.tag ? author.tag[0].toUpperCase() : '?'}</div>`;
+
+                let visualHtml = '';
+                if (post.gif_catalog?.url) visualHtml = `<img src="${post.gif_catalog.url}" class="visual">`;
+                if (post.sticker_catalog?.url) visualHtml = `<img src="${post.sticker_catalog.url}" class="visual sticker">`;
+
+                const likesCount = post.likes ? post.likes.length : 0;
+                const isLiked = post.likes ? post.likes.some(l => l.user_id === currentUser.id) : false;
+                const likeBtnClass = isLiked ? 'action-btn liked' : 'action-btn';
+
+                // Кнопка удаления (только для автора поста на фронтенде)
+                let deleteBtnHtml = '';
+                if (post.author_id === currentUser.id) {
+                    deleteBtnHtml = `<button class="action-btn delete" onclick="deletePost(${post.id})">🗑 Удалить</button>`;
+                }
+
+                let commentsHtml = '';
+                if (post.comments && post.comments.length > 0) {
+                    commentsHtml = post.comments.map(c => `
+                        <div class="comment">
+                            <span class="comment-author">${c.users?.nickname || 'User'}:</span>
+                            <span class="comment-body">${c.body}</span>
+                        </div>
+                    `).join('');
+                }
+
+                feed.innerHTML += `
+                    <div class="post">
+                        <div class="post-header">
+                            <div class="user-info-wrapper">
+                                ${avatarHtml}
+                                <div class="user-info">
+                                    <span class="nickname">${author.nickname}</span>
+                                    <span class="tag">&lt;${author.tag}&gt;</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-body">${post.body}</div>
+                        ${visualHtml}
+                        
+                        <div class="post-actions">
+                            <button class="${likeBtnClass}" onclick="toggleLike(${post.id}, ${isLiked})">
+                                ❤️ ${likesCount}
+                            </button>
+                            ${deleteBtnHtml}
+                        </div>
+
+                        <div class="comments-section">
+                            <div id="comments-list-${post.id}">
+                                ${commentsHtml || '<span style="color:#666; font-size:13px;">Нет ответов</span>'}
+                            </div>
+                            <div class="comment-form">
+                                <input type="text" id="comment-input-${post.id}" placeholder="Написать ответ...">
+                                <button onclick="submitComment(${post.id})">Ответить</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
