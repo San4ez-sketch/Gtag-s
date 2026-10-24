@@ -2,38 +2,48 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Gtags v0.1</title>
+    <title>Gtags v0.2</title>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; }
         .card { background: #1e1e1e; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; background: #2a2a2a; color: #fff; box-sizing: border-box; font-size: 15px; }
         input:focus, textarea:focus { outline: none; border-color: #3b82f6; }
-        button { padding: 10px 15px; border-radius: 8px; border: none; background: #3b82f6; color: #fff; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s; }
+        
+        button { padding: 10px 15px; border-radius: 8px; border: none; background: #3b82f6; color: #fff; cursor: pointer; font-weight: bold; font-size: 14px; transition: all 0.1s; }
         button:hover { background: #2563eb; }
+        button:active { transform: scale(0.95); }
         .btn-full { width: 100%; margin-top: 10px; font-size: 16px; padding: 12px; }
+        
         .hidden { display: none !important; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #333; }
         .header h1 { margin: 0; font-size: 24px; }
-        .post { background: #1e1e1e; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #333; }
+        
+        .post { background: #1e1e1e; border-radius: 12px; padding: 16px; margin-bottom: 16px; border: 1px solid #333; transition: border-color 0.3s; }
+        .post:hover { border-color: #444; }
         .post-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .user-info-wrapper { display: flex; align-items: center; gap: 12px; }
+        
+        .user-info-wrapper { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+        .user-info-wrapper:hover .nickname { color: #3b82f6; text-decoration: underline; }
         .avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: #444; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; color: #fff; flex-shrink: 0; }
         .user-info { display: flex; flex-direction: column; }
-        .nickname { font-weight: bold; font-size: 16px; }
+        .nickname { font-weight: bold; font-size: 16px; transition: color 0.2s; }
         .tag { color: #888; font-size: 14px; }
+        
         .post-body { margin: 10px 0; font-size: 15px; line-height: 1.5; white-space: pre-wrap; }
         .visual { max-width: 100%; border-radius: 8px; margin-top: 10px; display: block; border: 1px solid #333; }
         .visual.sticker { width: 120px; height: 120px; object-fit: contain; background: #2a2a2a; padding: 10px; }
+        
         .picker { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; min-height: 70px; align-items: center; }
-        .picker img { width: 60px; height: 60px; object-fit: contain; border-radius: 8px; cursor: pointer; border: 2px solid transparent; background: #2a2a2a; padding: 5px; transition: border-color 0.2s; }
-        .picker img:hover { border-color: #555; }
+        .picker img { width: 60px; height: 60px; object-fit: contain; border-radius: 8px; cursor: pointer; border: 2px solid transparent; background: #2a2a2a; padding: 5px; transition: transform 0.2s; }
+        .picker img:hover { transform: scale(1.1); }
         .picker img.selected { border-color: #3b82f6; }
+        
         #auth-error { color: #ef4444; font-size: 14px; margin-top: 10px; text-align: center; min-height: 20px; }
         hr { border: 0; border-top: 1px solid #333; margin: 20px 0; }
         
         .post-actions { display: flex; gap: 15px; margin-top: 15px; border-top: 1px solid #333; padding-top: 10px; }
-        .action-btn { background: transparent; color: #aaa; padding: 5px 10px; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+        .action-btn { background: transparent; color: #aaa; padding: 6px 12px; font-size: 14px; display: flex; align-items: center; gap: 5px; border-radius: 20px; }
         .action-btn:hover { background: #2a2a2a; color: #fff; }
         .action-btn.liked { color: #ef4444; }
         .action-btn.delete { color: #ef4444; }
@@ -46,6 +56,12 @@
         .comment-form { display: flex; gap: 10px; margin-top: 10px; }
         .comment-form input { margin: 0; flex-grow: 1; padding: 8px; font-size: 13px; }
         .comment-form button { padding: 8px 15px; margin: 0; font-size: 13px; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #1e1e1e; padding: 30px; border-radius: 12px; text-align: center; border: 1px solid #444; max-width: 300px; width: 100%; }
+        .modal-avatar { width: 100px; height: 100px; border-radius: 50%; object-fit: contain; background: #2a2a2a; padding: 10px; margin: 0 auto 15px auto; display: block; }
+        .modal-close { margin-top: 20px; background: #333; }
+        .modal-close:hover { background: #555; }
     </style>
 </head>
 <body>
@@ -75,7 +91,7 @@
 
         <div id="main-screen" class="hidden">
             <div class="header">
-                <h1>Gtags <span style="font-size:14px; color:#666;">v0.1</span></h1>
+                <h1>Gtags <span style="font-size:14px; color:#666;">v0.2</span></h1>
                 <button style="padding: 8px 16px;" onclick="logout()">Выйти</button>
             </div>
 
@@ -97,6 +113,15 @@
             </div>
         </div>
 
+    </div>
+
+    <div id="profile-modal" class="modal hidden" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <img id="modal-avatar" class="modal-avatar" src="">
+            <h2 id="modal-nick" style="margin: 0;"></h2>
+            <p id="modal-tag" style="color: #888; margin-top: 5px;"></p>
+            <button class="modal-close btn-full" onclick="closeModal()">Закрыть</button>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -233,18 +258,11 @@
             }
         }
 
-        // УДАЛЕНИЕ ПОСТА (Теперь работает, т.к. мы добавили правило в базу)
         async function deletePost(postId) {
             if (!confirm('Ты уверен, что хочешь удалить этот пост?')) return;
-            
-            // База данных сама проверит, что currentUser.id совпадает с автором
             const { error } = await supabaseClient.from('posts').delete().eq('id', postId);
-            
-            if (error) {
-                alert('Не удалось удалить: ' + error.message);
-            } else {
-                loadFeed(); // Обновляем ленту
-            }
+            if (error) alert('Не удалось удалить: ' + error.message);
+            else loadFeed();
         }
 
         async function toggleLike(postId, currentlyLiked) {
@@ -267,6 +285,26 @@
             else { input.value = ''; loadFeed(); }
         }
 
+        // Безопасный показ профиля (через объект)
+        function showProfile(nick, tag, avatarId) {
+            const avSticker = catalogStickers.find(s => s.id === avatarId);
+            const modalAvatar = document.getElementById('modal-avatar');
+            if (avSticker) {
+                modalAvatar.src = avSticker.url;
+                modalAvatar.style.display = 'block';
+            } else {
+                modalAvatar.style.display = 'none'; 
+            }
+            document.getElementById('modal-nick').innerText = nick;
+            document.getElementById('modal-tag').innerText = `<${tag}>`;
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        function closeModal(event) {
+            if (event && event.target.id !== 'profile-modal' && event.target.className !== 'modal-close btn-full') return;
+            document.getElementById('profile-modal').classList.add('hidden');
+        }
+
         async function loadFeed() {
             const feed = document.getElementById('feed');
             feed.innerHTML = '<p style="text-align:center; color:#666;">Загрузка...</p>';
@@ -274,11 +312,11 @@
             const { data, error } = await supabaseClient.from('posts')
                 .select(`
                     *,
-                    users!posts_author_id_fkey ( nickname, tag, avatar_sticker_id ),
+                    users!posts_author_id_fkey ( id, nickname, tag, avatar_sticker_id ),
                     gif_catalog ( url ),
                     sticker_catalog ( url ),
                     likes ( user_id ),
-                    comments ( id, body, users ( nickname ) )
+                    comments ( id, body, users ( nickname, tag, avatar_sticker_id ) )
                 `)
                 .order('created_at', { ascending: false });
 
@@ -299,26 +337,30 @@
                 const isLiked = post.likes ? post.likes.some(l => l.user_id === currentUser.id) : false;
                 const likeBtnClass = isLiked ? 'action-btn liked' : 'action-btn';
 
-                // Кнопка удаления (только для автора поста на фронтенде)
                 let deleteBtnHtml = '';
                 if (post.author_id === currentUser.id) {
                     deleteBtnHtml = `<button class="action-btn delete" onclick="deletePost(${post.id})">🗑 Удалить</button>`;
                 }
 
+                // Сохраняем данные для модального окна прямо в HTML
+                const authorJson = JSON.stringify(author).replace(/'/g, "&#39;");
+
                 let commentsHtml = '';
                 if (post.comments && post.comments.length > 0) {
-                    commentsHtml = post.comments.map(c => `
+                    commentsHtml = post.comments.map(c => {
+                        const cAuthorJson = JSON.stringify(c.users).replace(/'/g, "&#39;");
+                        return `
                         <div class="comment">
-                            <span class="comment-author">${c.users?.nickname || 'User'}:</span>
+                            <span class="comment-author" onclick='showProfileFromJson("${cAuthorJson}")'>${c.users?.nickname || 'User'}:</span>
                             <span class="comment-body">${c.body}</span>
-                        </div>
-                    `).join('');
+                        </div>`;
+                    }).join('');
                 }
 
                 feed.innerHTML += `
                     <div class="post">
                         <div class="post-header">
-                            <div class="user-info-wrapper">
+                            <div class="user-info-wrapper" onclick='showProfileFromJson("${authorJson}")'>
                                 ${avatarHtml}
                                 <div class="user-info">
                                     <span class="nickname">${author.nickname}</span>
@@ -348,6 +390,12 @@
                     </div>
                 `;
             });
+        }
+
+        // Парсим JSON для профиля (чтобы избежать ошибок с кавычками)
+        function showProfileFromJson(jsonString) {
+            const user = JSON.parse(jsonString);
+            showProfile(user.nickname, user.tag, user.avatar_sticker_id);
         }
 
         init();
